@@ -24,8 +24,8 @@ from subprocess import PIPE
 from dateutil import parser
 from pathlib import Path
 
+from medusa import utils
 from medusa.libcloud.storage.drivers.s3_base_driver import S3BaseStorageDriver
-
 from medusa.storage.abstract_storage import AbstractStorage
 import medusa.storage.s3_compat_storage.concurrent
 from medusa.storage.s3_compat_storage.awscli import AwsCli
@@ -65,7 +65,10 @@ class S3BaseStorage(AbstractStorage):
             raise NotImplementedError("No valid access key defined.")
 
         # MinIOStorageDriver is the only clean implementation of BaseS3StorageDriver in libcloud
-        secure = False if self.config.secure is None or self.config.secure.lower() in ('0', 'false') else True
+        secure = False
+        if self.config.secure:
+            secure = utils.evaluate_boolean(self.config.secure)
+
         driver = S3BaseStorageDriver(
             host=self.config.host,
             port=self.config.port,

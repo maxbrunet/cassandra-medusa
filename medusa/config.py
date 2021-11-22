@@ -27,7 +27,7 @@ from medusa.utils import evaluate_boolean
 
 StorageConfig = collections.namedtuple(
     'StorageConfig',
-    ['bucket_name', 'key_file', 'prefix', 'fqdn', 'host_file_separator', 'storage_provider',
+    ['bucket_name', 'key_file', 'cert_file', 'prefix', 'fqdn', 'host_file_separator', 'storage_provider',
      'base_path', 'max_backup_age', 'max_backup_count', 'api_profile', 'transfer_max_bandwidth',
      'concurrent_transfers', 'multi_part_upload_threshold', 'host', 'region', 'port', 'secure', 'aws_cli_path',
      'backup_grace_period_in_days', 'use_sudo_for_restore']
