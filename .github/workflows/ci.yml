@@ -2,7 +2,7 @@ name: Build, test and Release
 on:
   push:
     branches:
-      - master
+      - testing
   pull_request:
   release:
     types:
@@ -267,27 +267,31 @@ jobs:
 
   publish-docker-master:
     needs: [debian-build, build, integration-tests]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/testing'
     strategy:
       matrix:
         storage-provider: ["", "-s3", "-azure", "-gcs"]
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@42d299face0c5c43a0487c477f595ac9cf22f1a7 # renovate: tag=v1.12.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Publish Beta Docker Image
-      env:
-        DOCKER_USERNAME: ${{ secrets.K8SSANDRA_DOCKER_HUB_USERNAME }}
-        DOCKER_TOKEN: ${{ secrets.K8SSANDRA_DOCKER_HUB_PASSWORD }}
       run: |
-        docker login -u $DOCKER_USERNAME -p $DOCKER_TOKEN
         echo "Publishing release $(git rev-parse --short HEAD)${{ matrix.storage-provider }} in Docker Hub"
         python setup.py build
         # Push Docker image tagged with the short commit sha
-        docker build -t k8ssandra/medusa:$(git rev-parse --short HEAD)${{ matrix.storage-provider }} -f k8s/Dockerfile${{ matrix.storage-provider }} .
-        docker push k8ssandra/medusa:$(git rev-parse --short HEAD)${{ matrix.storage-provider }}
+        docker build -t ghcr.io/maxbrunet/medusa:$(git rev-parse --short HEAD)${{ matrix.storage-provider }} -f k8s/Dockerfile${{ matrix.storage-provider }} .
+        docker push ghcr.io/maxbrunet/medusa:$(git rev-parse --short HEAD)${{ matrix.storage-provider }}
         # Push Docker image tagged as "master"
-        docker tag k8ssandra/medusa:$(git rev-parse --short HEAD)${{ matrix.storage-provider }} k8ssandra/medusa:master${{ matrix.storage-provider }}
-        docker push k8ssandra/medusa:master${{ matrix.storage-provider }}
+        docker tag ghcr.io/maxbrunet/medusa:$(git rev-parse --short HEAD)${{ matrix.storage-provider }} ghcr.io/maxbrunet/medusa:master${{ matrix.storage-provider }}
+        docker push ghcr.io/maxbrunet/medusa:master${{ matrix.storage-provider }}
     
   publish-debian:
     # We can only release if the build above succeeded first
